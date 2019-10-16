@@ -58,10 +58,12 @@ const styles = StyleSheet.create({
 
 interface Errors {
   emailAddress: string[];
+  registration: string;
 }
 
 const initialState: Errors = {
-  emailAddress: []
+  emailAddress: [],
+  registration: ''
 };
 
 const App: React.FC = () => {
@@ -70,29 +72,32 @@ const App: React.FC = () => {
 
   const onChange = (text): void => {
     setEmail(text);
-    if (errors.emailAddress.length > 0) {
+    if (errors.emailAddress.length > 0 || errors.registration.length > 0) {
       setErrors(initialState);
     }
   };
 
-  const onPress = (): void => {
+  const onPress = async (): Promise<void> => {
     const validationResult = validate(
       { emailAddress: email },
       emailConstraints
     );
-    console.log(validationResult);
     if (validationResult) {
       setErrors(validationResult);
-      console.log(errors);
     }
     if (!validationResult) {
       setErrors(initialState);
-      registerForPushNotificationsAsync(email);
+      const res = await registerForPushNotificationsAsync(email);
+      if (res.error) {
+        console.log(res);
+        setErrors({ emailAddress: [], registration: res.error });
+      }
     }
   };
 
   return (
     <View style={styles.container}>
+      {errors.registration ? <Text>{errors.registration}</Text> : null}
       {errors.emailAddress.length > 0
         ? errors.emailAddress.map(error => <Text key={error}>{error}</Text>)
         : null}
