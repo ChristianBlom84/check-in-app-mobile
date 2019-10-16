@@ -4,7 +4,8 @@ import {
   TextInput,
   Text,
   View,
-  TouchableOpacity
+  TouchableOpacity,
+  InteractionManager
 } from 'react-native';
 import { validate } from 'validate.js';
 import registerForPushNotificationsAsync from './utils/RegisterPushNotifications';
@@ -53,6 +54,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.23,
     shadowRadius: 2.62,
     elevation: 4
+  },
+  notificationView: {
+    width: '100%',
+    height: 60,
+    position: 'absolute',
+    top: 40,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  notificationText: {
+    color: 'white',
+    fontSize: 20
+  },
+  dangerView: {
+    backgroundColor: 'red'
+  },
+  successView: {
+    backgroundColor: 'green'
   }
 });
 
@@ -61,19 +80,20 @@ interface Errors {
   registration: string;
 }
 
-const initialState: Errors = {
+const initialErrorState: Errors = {
   emailAddress: [],
   registration: ''
 };
 
 const App: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [errors, setErrors] = useState(initialState);
+  const [errors, setErrors] = useState(initialErrorState);
+  const [success, setSuccess] = useState('');
 
   const onChange = (text): void => {
     setEmail(text);
     if (errors.emailAddress.length > 0 || errors.registration.length > 0) {
-      setErrors(initialState);
+      setErrors(initialErrorState);
     }
   };
 
@@ -86,21 +106,43 @@ const App: React.FC = () => {
       setErrors(validationResult);
     }
     if (!validationResult) {
-      setErrors(initialState);
+      setErrors(initialErrorState);
       const res = await registerForPushNotificationsAsync(email);
       if (res.error) {
         console.log(res);
         setErrors({ emailAddress: [], registration: res.error });
+        InteractionManager.runAfterInteractions(() => {
+          setTimeout(() => setErrors(initialErrorState), 3000);
+        });
+      } else {
+        InteractionManager.runAfterInteractions(() => {
+          setTimeout(() => setSuccess('You are now checked in!'), 3000);
+        });
       }
     }
   };
 
   return (
     <View style={styles.container}>
-      {errors.registration ? <Text>{errors.registration}</Text> : null}
-      {errors.emailAddress.length > 0
-        ? errors.emailAddress.map(error => <Text key={error}>{error}</Text>)
-        : null}
+      {success ? (
+        <View style={[styles.notificationView, styles.successView]}>
+          <Text style={styles.notificationText}>{success}</Text>
+        </View>
+      ) : null}
+      {errors.registration ? (
+        <View style={[styles.notificationView, styles.dangerView]}>
+          <Text style={styles.notificationText}>{errors.registration}</Text>
+        </View>
+      ) : null}
+      {errors.emailAddress.length > 0 ? (
+        <View style={[styles.notificationView, styles.dangerView]}>
+          {errors.emailAddress.map(error => (
+            <Text key={error} style={styles.notificationText}>
+              {error}
+            </Text>
+          ))}
+        </View>
+      ) : null}
       <TextInput
         style={styles.input}
         value={email}
