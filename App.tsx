@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   TextInput,
@@ -8,8 +8,10 @@ import {
   InteractionManager
 } from 'react-native';
 import { validate } from 'validate.js';
+import { Notifications } from 'expo';
 import registerForPushNotificationsAsync from './utils/RegisterPushNotifications';
 import { emailConstraints } from './validation/constraints';
+import { CHECK_REGISTRATION_ENDPOINT } from './consts/consts';
 
 const styles = StyleSheet.create({
   container: {
@@ -85,10 +87,42 @@ const initialErrorState: Errors = {
   registration: ''
 };
 
+const initialRegisteredState = {
+  registered: false,
+  withEmail: '',
+  source: ''
+};
+
 const App: React.FC = () => {
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState(initialErrorState);
   const [success, setSuccess] = useState('');
+  const [deviceRegistered, setDeviceRegistered] = useState(
+    initialRegisteredState
+  );
+
+  useEffect(() => {
+    const checkRegistration = async (): Promise<void> => {
+      const token = await Notifications.getExpoPushTokenAsync();
+      const res = await fetch(CHECK_REGISTRATION_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          pushToken: token
+        })
+      });
+      const body = await res.json();
+      setDeviceRegistered(body);
+    };
+
+    checkRegistration();
+    InteractionManager.runAfterInteractions(() => {
+      setTimeout(() => setDeviceRegistered(initialRegisteredState), 3000);
+    });
+  }, []);
 
   const onChange = (text): void => {
     setEmail(text);
@@ -104,6 +138,9 @@ const App: React.FC = () => {
     );
     if (validationResult) {
       setErrors(validationResult);
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => setErrors(initialErrorState), 3000);
+      });
     }
     if (!validationResult) {
       setErrors(initialErrorState);
@@ -115,8 +152,9 @@ const App: React.FC = () => {
           setTimeout(() => setErrors(initialErrorState), 3000);
         });
       } else {
+        setSuccess('You are now checked in!');
         InteractionManager.runAfterInteractions(() => {
-          setTimeout(() => setSuccess('You are now checked in!'), 3000);
+          setTimeout(() => setSuccess(''), 3000);
         });
       }
     }
@@ -124,6 +162,13 @@ const App: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {deviceRegistered.registered ? (
+        <View style={[styles.notificationView, styles.successView]}>
+          <Text style={styles.notificationText}>
+            Device is registered with email {deviceRegistered.withEmail}
+          </Text>
+        </View>
+      ) : null}
       {success ? (
         <View style={[styles.notificationView, styles.successView]}>
           <Text style={styles.notificationText}>{success}</Text>
