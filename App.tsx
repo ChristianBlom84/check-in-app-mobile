@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { validate } from 'validate.js';
 import { Notifications } from 'expo';
+import Layout from './components/layout/Layout';
 import registerForPushNotificationsAsync from './utils/RegisterPushNotifications';
 import { emailConstraints } from './validation/constraints';
 import { CHECK_REGISTRATION_ENDPOINT } from './consts/consts';
@@ -161,45 +162,47 @@ const App: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {deviceRegistered.registered ? (
-        <View style={[styles.notificationView, styles.successView]}>
-          <Text style={styles.notificationText}>
-            Device is registered with email {deviceRegistered.withEmail}
-          </Text>
-        </View>
-      ) : null}
-      {success ? (
-        <View style={[styles.notificationView, styles.successView]}>
-          <Text style={styles.notificationText}>{success}</Text>
-        </View>
-      ) : null}
-      {errors.registration ? (
-        <View style={[styles.notificationView, styles.dangerView]}>
-          <Text style={styles.notificationText}>{errors.registration}</Text>
-        </View>
-      ) : null}
-      {errors.emailAddress.length > 0 ? (
-        <View style={[styles.notificationView, styles.dangerView]}>
-          {errors.emailAddress.map(error => (
-            <Text key={error} style={styles.notificationText}>
-              {error}
+    <Layout>
+      <View style={styles.container}>
+        {deviceRegistered.registered ? (
+          <View style={[styles.notificationView, styles.successView]}>
+            <Text style={styles.notificationText}>
+              Device is registered with email {deviceRegistered.withEmail}
             </Text>
-          ))}
-        </View>
-      ) : null}
-      <TextInput
-        style={styles.input}
-        value={email}
-        placeholder="E-mail"
-        textContentType="emailAddress"
-        onChangeText={(text): void => onChange(text)}
-        onSubmitEditing={onPress}
-      />
-      <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={styles.buttonText}>Sign up for push notifications</Text>
-      </TouchableOpacity>
-    </View>
+          </View>
+        ) : null}
+        {success ? (
+          <View style={[styles.notificationView, styles.successView]}>
+            <Text style={styles.notificationText}>{success}</Text>
+          </View>
+        ) : null}
+        {errors.registration ? (
+          <View style={[styles.notificationView, styles.dangerView]}>
+            <Text style={styles.notificationText}>{errors.registration}</Text>
+          </View>
+        ) : null}
+        {errors.emailAddress.length > 0 ? (
+          <View style={[styles.notificationView, styles.dangerView]}>
+            {errors.emailAddress.map(error => (
+              <Text key={error} style={styles.notificationText}>
+                {error}
+              </Text>
+            ))}
+          </View>
+        ) : null}
+        <TextInput
+          style={styles.input}
+          value={email}
+          placeholder="E-mail"
+          textContentType="emailAddress"
+          onChangeText={(text): void => onChange(text)}
+          onSubmitEditing={onPress}
+        />
+        <TouchableOpacity style={styles.button} onPress={onPress}>
+          <Text style={styles.buttonText}>Sign up for push notifications</Text>
+        </TouchableOpacity>
+      </View>
+    </Layout>
   );
 };
 
