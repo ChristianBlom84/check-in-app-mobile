@@ -18,7 +18,8 @@ const styles = StyleSheet.create({
     marginLeft: -25
   },
   heading: {
-    fontSize: 20
+    fontSize: 20,
+    fontFamily: 'oswald'
   }
 });
 

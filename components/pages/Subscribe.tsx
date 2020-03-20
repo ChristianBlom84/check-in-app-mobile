@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   TextInput,
   Text,
   View,
   TouchableOpacity,
-  InteractionManager
+  InteractionManager,
+  ScrollView
 } from 'react-native';
 import { validate } from 'validate.js';
-import { Notifications } from 'expo';
 import registerForPushNotificationsAsync from '../../utils/RegisterPushNotifications';
 import { formConstraints } from '../../validation/constraints';
-import { CHECK_REGISTRATION_ENDPOINT } from '../../consts/consts';
 
 const styles = StyleSheet.create({
   container: {
@@ -22,7 +21,8 @@ const styles = StyleSheet.create({
   },
   preamble: {
     marginBottom: 30,
-    fontSize: 18
+    fontSize: 18,
+    fontFamily: 'cabin'
   },
   formGroup: {
     width: '100%',
@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
   input: {
     height: 40,
     width: '100%',
+    fontFamily: 'cabin',
     paddingHorizontal: 10,
     borderColor: 'gray',
     borderWidth: 1,
@@ -79,7 +80,8 @@ const styles = StyleSheet.create({
   },
   notificationText: {
     color: 'white',
-    fontSize: 20
+    fontSize: 20,
+    fontFamily: 'cabin'
   },
   dangerView: {
     backgroundColor: 'red'
@@ -101,43 +103,11 @@ const initialErrorState: Errors = {
   registration: ''
 };
 
-const initialRegisteredState = {
-  registered: false,
-  withEmail: '',
-  source: ''
-};
-
 const Subscribe: React.FC = () => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [errors, setErrors] = useState(initialErrorState);
   const [success, setSuccess] = useState('');
-  const [deviceRegistered, setDeviceRegistered] = useState(
-    initialRegisteredState
-  );
-
-  useEffect(() => {
-    const checkRegistration = async (): Promise<void> => {
-      const token = await Notifications.getExpoPushTokenAsync();
-      const res = await fetch(CHECK_REGISTRATION_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          pushToken: token
-        })
-      });
-      const body = await res.json();
-      setDeviceRegistered(body);
-    };
-
-    checkRegistration();
-    InteractionManager.runAfterInteractions(() => {
-      setTimeout(() => setDeviceRegistered(initialRegisteredState), 3000);
-    });
-  }, []);
 
   const onChange = (text, fieldName): void => {
     console.log(fieldName);
@@ -182,74 +152,71 @@ const Subscribe: React.FC = () => {
     }
   };
   return (
-    <View style={styles.container}>
-      {deviceRegistered.registered ? (
-        <View style={[styles.notificationView, styles.successView]}>
-          <Text style={styles.notificationText}>
-            Device is registered with email {deviceRegistered.withEmail}
+    <ScrollView>
+      <View style={styles.container}>
+        {success ? (
+          <View style={[styles.notificationView, styles.successView]}>
+            <Text style={styles.notificationText}>{success}</Text>
+          </View>
+        ) : null}
+        {errors.registration ? (
+          <View style={[styles.notificationView, styles.dangerView]}>
+            <Text style={styles.notificationText}>{errors.registration}</Text>
+          </View>
+        ) : null}
+        {errors.name.length > 0 ? (
+          <View style={[styles.notificationView, styles.dangerView]}>
+            <Text style={styles.notificationText}>{errors.name[0]}</Text>
+          </View>
+        ) : null}
+        {errors.email.length > 0 ? (
+          <View
+            style={[
+              styles.notificationView,
+              styles.dangerView,
+              errors.name.length > 0 ? { bottom: 60 } : {}
+            ]}
+          >
+            {errors.email.map(error => (
+              <Text key={error} style={styles.notificationText}>
+                {error}
+              </Text>
+            ))}
+          </View>
+        ) : null}
+        <View style={styles.formGroup}>
+          <Text style={styles.preamble}>
+            Sign up with your name and company email to mark yourself as safe
+            and recieve important status updates from your organization.
           </Text>
-        </View>
-      ) : null}
-      {success ? (
-        <View style={[styles.notificationView, styles.successView]}>
-          <Text style={styles.notificationText}>{success}</Text>
-        </View>
-      ) : null}
-      {errors.registration ? (
-        <View style={[styles.notificationView, styles.dangerView]}>
-          <Text style={styles.notificationText}>{errors.registration}</Text>
-        </View>
-      ) : null}
-      {errors.name.length > 0 ? (
-        <View style={[styles.notificationView, styles.dangerView]}>
-          <Text style={styles.notificationText}>{errors.name[0]}</Text>
-        </View>
-      ) : null}
-      {errors.email.length > 0 ? (
-        <View
-          style={[
-            styles.notificationView,
-            styles.dangerView,
-            errors.name.length > 0 ? { bottom: 60 } : {}
-          ]}
-        >
-          {errors.email.map(error => (
-            <Text key={error} style={styles.notificationText}>
-              {error}
+          <Text style={styles.label}>Name:</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            placeholder="John Doe"
+            textContentType="name"
+            autoCorrect={false}
+            onChangeText={(text): void => onChange(text, 'name')}
+            onSubmitEditing={onPress}
+          />
+          <Text style={styles.label}>Email:</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            placeholder="john@example.com"
+            textContentType="emailAddress"
+            autoCorrect={false}
+            onChangeText={(text): void => onChange(text, 'email')}
+            onSubmitEditing={onPress}
+          />
+          <TouchableOpacity style={styles.button} onPress={onPress}>
+            <Text style={styles.buttonText}>
+              Sign up for push notifications
             </Text>
-          ))}
+          </TouchableOpacity>
         </View>
-      ) : null}
-      <View style={styles.formGroup}>
-        <Text style={styles.preamble}>
-          Sign up with your name and company email to mark yourself as safe and
-          recieve important status updates from your organization.
-        </Text>
-        <Text style={styles.label}>Name:</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          placeholder="John Doe"
-          textContentType="name"
-          autoCorrect={false}
-          onChangeText={(text): void => onChange(text, 'name')}
-          onSubmitEditing={onPress}
-        />
-        <Text style={styles.label}>Email:</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          placeholder="john@example.com"
-          textContentType="emailAddress"
-          autoCorrect={false}
-          onChangeText={(text): void => onChange(text, 'email')}
-          onSubmitEditing={onPress}
-        />
-        <TouchableOpacity style={styles.button} onPress={onPress}>
-          <Text style={styles.buttonText}>Sign up for push notifications</Text>
-        </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
