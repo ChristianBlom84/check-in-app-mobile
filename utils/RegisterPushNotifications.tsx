@@ -7,6 +7,7 @@ interface PushResponse {
 }
 
 const registerForPushNotificationsAsync = async (
+  name: string,
   email: string
 ): Promise<PushResponse> => {
   const { status: existingStatus } = await Permissions.getAsync(
@@ -42,6 +43,7 @@ const registerForPushNotificationsAsync = async (
       },
       body: JSON.stringify({
         pushToken: token,
+        name,
         email
       })
     });
