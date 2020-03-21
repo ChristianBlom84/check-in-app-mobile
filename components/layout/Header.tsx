@@ -5,7 +5,7 @@ import icon from '../../assets/icon-transparent.png';
 const styles = StyleSheet.create({
   header: {
     backgroundColor: '#2F80ED',
-    maxHeight: 75,
+    maxHeight: 100,
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',

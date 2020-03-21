@@ -50,7 +50,7 @@ const App: React.FC = () => {
   }, []);
 
   return fontLoaded ? (
-    <Layout>{deviceRegistered ? <Subscribe /> : <Subscribe />}</Layout>
+    <Layout>{deviceRegistered ? <Dashboard /> : <Subscribe />}</Layout>
   ) : null;
 };
 
