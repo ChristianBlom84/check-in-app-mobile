@@ -59,7 +59,9 @@ const App: React.FC = () => {
 
   return fontLoaded ? (
     <Fragment>
-      {modalOpen ? <Modal text={modalText} /> : null}
+      {modalOpen ? (
+        <Modal text={modalText} setModalOpen={setModalOpen} />
+      ) : null}
       <Layout>
         {deviceRegistered ? <Dashboard openModal={openModal} /> : <Subscribe />}
       </Layout>

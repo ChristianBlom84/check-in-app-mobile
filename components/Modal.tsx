@@ -1,5 +1,11 @@
 import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  GestureResponderEvent
+} from 'react-native';
 
 const modalHeight = window.innerHeight + 100;
 
@@ -23,25 +29,40 @@ const styles = StyleSheet.create({
     height: '60%',
     borderRadius: 5,
     backgroundColor: 'white',
+    paddingHorizontal: 30,
+    paddingVertical: 30,
     zIndex: 30,
     shadowOffset: { width: 2, height: 5 },
     shadowColor: 'black',
     shadowRadius: 5,
     shadowOpacity: 0.3
+  },
+  text: {
+    fontSize: 18,
+    fontFamily: 'cabin'
   }
 });
 
 interface Props {
   text: string;
+  setModalOpen: (state: boolean) => void;
 }
 
-const Modal: React.FC<Props> = ({ text }) => {
+const Modal: React.FC<Props> = ({ text, setModalOpen }) => {
+  const pressHandler = (e: GestureResponderEvent): void => {
+    e.stopPropagation();
+    setModalOpen(false);
+  };
+
   return (
-    <View style={styles.background}>
+    <TouchableOpacity
+      style={styles.background}
+      onPress={(e: GestureResponderEvent): void => pressHandler(e)}
+    >
       <View style={styles.modal}>
-        <Text>{text}</Text>
+        <Text style={styles.text}>{text}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
