@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   item: {
     fontSize: 18,
     fontFamily: 'cabin',
-    marginBottom: 10
+    marginBottom: 18
   }
 });
 
@@ -85,7 +85,9 @@ const Dashboard: React.FC<{ openModal: CallableFunction }> = ({
               <Text style={styles.date}>
                 {new Date(item.date).toLocaleString()}
               </Text>
-              <Text style={styles.item}>{item.message}</Text>
+              <Text ellipsizeMode="tail" numberOfLines={1} style={styles.item}>
+                {item.message}
+              </Text>
             </TouchableOpacity>
           )}
         />

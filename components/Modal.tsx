@@ -59,9 +59,9 @@ const Modal: React.FC<Props> = ({ text, setModalOpen }) => {
       style={styles.background}
       onPress={(e: GestureResponderEvent): void => pressHandler(e)}
     >
-      <View style={styles.modal}>
+      <TouchableOpacity activeOpacity={1} style={styles.modal}>
         <Text style={styles.text}>{text}</Text>
-      </View>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 };
