@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Fragment } from 'react';
 import { Notifications } from 'expo';
 import * as Font from 'expo-font';
 import { CHECK_REGISTRATION_ENDPOINT } from './consts/consts';
 import Subscribe from './components/pages/Subscribe';
 import Dashboard from './components/pages/Dashboard';
 import Layout from './components/layout/Layout';
+import Modal from './components/Modal';
 
 const initialRegisteredState = {
   registered: false,
@@ -17,6 +18,8 @@ const App: React.FC = () => {
     initialRegisteredState
   );
   const [fontLoaded, setFontLoaded] = useState(false);
+  const [modalText, setModalText] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     (async (): Promise<void> => {
@@ -49,8 +52,20 @@ const App: React.FC = () => {
     checkRegistration();
   }, []);
 
+  const openModal = (text: string): void => {
+    setModalOpen(true);
+    setModalText(text);
+  };
+
   return fontLoaded ? (
-    <Layout>{deviceRegistered ? <Dashboard /> : <Subscribe />}</Layout>
+    <Fragment>
+      {modalOpen ? (
+        <Modal text={modalText} setModalOpen={setModalOpen} />
+      ) : null}
+      <Layout>
+        {deviceRegistered ? <Dashboard openModal={openModal} /> : <Subscribe />}
+      </Layout>
+    </Fragment>
   ) : null;
 };
 

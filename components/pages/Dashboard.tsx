@@ -4,7 +4,7 @@ import {
   View,
   StyleSheet,
   FlatList,
-  InteractionManager
+  TouchableOpacity
 } from 'react-native';
 import { Notifications } from 'expo';
 import { GET_NOTIFICATIONS_ENDPOINT } from '../../consts/consts';
@@ -41,11 +41,13 @@ const styles = StyleSheet.create({
   item: {
     fontSize: 18,
     fontFamily: 'cabin',
-    marginBottom: 10
+    marginBottom: 18
   }
 });
 
-const Dashboard: React.FC = () => {
+const Dashboard: React.FC<{ openModal: CallableFunction }> = ({
+  openModal
+}) => {
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -77,15 +79,16 @@ const Dashboard: React.FC = () => {
       <View style={styles.list}>
         <FlatList
           data={notifications}
+          keyExtractor={(item): string => item._id}
           renderItem={({ item }): React.ReactElement => (
-            <>
-              <Text key={item.date} style={styles.date}>
+            <TouchableOpacity onPress={(): void => openModal(item.message)}>
+              <Text style={styles.date}>
                 {new Date(item.date).toLocaleString()}
               </Text>
-              <Text key={item._id} style={styles.item}>
+              <Text ellipsizeMode="tail" numberOfLines={1} style={styles.item}>
                 {item.message}
               </Text>
-            </>
+            </TouchableOpacity>
           )}
         />
       </View>
