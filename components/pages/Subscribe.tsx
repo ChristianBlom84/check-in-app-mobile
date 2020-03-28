@@ -103,7 +103,9 @@ const initialErrorState: Errors = {
   registration: ''
 };
 
-const Subscribe: React.FC = () => {
+const Subscribe: React.FC<{ setDeviceRegistered: CallableFunction }> = ({
+  setDeviceRegistered
+}) => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [errors, setErrors] = useState(initialErrorState);
@@ -137,6 +139,7 @@ const Subscribe: React.FC = () => {
     if (!validationResult) {
       setErrors(initialErrorState);
       const res = await registerForPushNotificationsAsync(name, email);
+      console.log(res);
       if (res.error) {
         console.log(res);
         setErrors({ email: [], name: [], registration: res.error });
@@ -146,7 +149,10 @@ const Subscribe: React.FC = () => {
       } else {
         setSuccess('You are now checked in!');
         InteractionManager.runAfterInteractions(() => {
-          setTimeout(() => setSuccess(''), 3000);
+          setTimeout(() => {
+            setSuccess('');
+            setDeviceRegistered({ registered: true });
+          }, 3000);
         });
       }
     }

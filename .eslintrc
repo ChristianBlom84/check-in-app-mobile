@@ -20,6 +20,7 @@
     },
     "rules": {
         "react/prop-types": [0],
+        "prefer-const": "off",
         "prettier/prettier": [
             "error",
             {

@@ -1,15 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Text,
   View,
+  Animated,
   StyleSheet,
   TouchableOpacity,
   GestureResponderEvent
 } from 'react-native';
-
-const modalHeight = window.innerHeight + 100;
-
-console.log(modalHeight);
 
 const styles = StyleSheet.create({
   background: {
@@ -37,6 +34,10 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     shadowOpacity: 0.3
   },
+  modalInside: {
+    height: '100%',
+    width: '100%'
+  },
   text: {
     fontSize: 18,
     fontFamily: 'cabin'
@@ -49,20 +50,51 @@ interface Props {
 }
 
 const Modal: React.FC<Props> = ({ text, setModalOpen }) => {
+  const [opacity, setOpacity] = useState(new Animated.Value(0));
   const pressHandler = (e: GestureResponderEvent): void => {
     e.stopPropagation();
-    setModalOpen(false);
+    Animated.timing(opacity, {
+      toValue: 0,
+      useNativeDriver: true,
+      duration: 200
+    }).start();
+    setTimeout(() => {
+      setModalOpen(false);
+    }, 300);
   };
 
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: 1,
+      useNativeDriver: true,
+      duration: 200
+    }).start();
+  }, []);
+
   return (
-    <TouchableOpacity
-      style={styles.background}
-      onPress={(e: GestureResponderEvent): void => pressHandler(e)}
-    >
-      <TouchableOpacity activeOpacity={1} style={styles.modal}>
-        <Text style={styles.text}>{text}</Text>
+    <Animated.View style={[styles.background, { opacity, background: 'none' }]}>
+      <TouchableOpacity
+        style={styles.background}
+        onPress={(e: GestureResponderEvent): void => pressHandler(e)}
+      >
+        <Animated.View
+          style={[
+            styles.modal,
+            {
+              transform: [
+                {
+                  scale: opacity
+                }
+              ]
+            }
+          ]}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.modalInside}>
+            <Text style={styles.text}>{text}</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </TouchableOpacity>
-    </TouchableOpacity>
+    </Animated.View>
   );
 };
 
