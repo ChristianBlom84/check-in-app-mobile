@@ -4,9 +4,12 @@ import {
   View,
   StyleSheet,
   FlatList,
-  TouchableOpacity
+  TouchableOpacity,
+  Animated
 } from 'react-native';
 import { Notifications } from 'expo';
+import { Notification } from 'expo/build/Notifications/Notifications.types';
+import { EventSubscription } from 'fbemitter';
 import { GET_NOTIFICATIONS_ENDPOINT } from '../../consts/consts';
 
 const styles = StyleSheet.create({
@@ -49,31 +52,72 @@ const Dashboard: React.FC<{ openModal: CallableFunction }> = ({
   openModal
 }) => {
   const [notifications, setNotifications] = useState([]);
+  const [animation, setAnimation] = useState(new Animated.Value(0));
+  const [notificationListener, setNotificationListener] = useState<
+    EventSubscription
+  >();
+
+  const getNotifications = async (): Promise<void> => {
+    const token = await Notifications.getExpoPushTokenAsync();
+    const res = await fetch(GET_NOTIFICATIONS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        pushToken: token
+      })
+    });
+    const body = await res.json();
+    setNotifications(body);
+  };
+
+  const handleNotification = (notification: Notification): void => {
+    console.log(notification);
+    getNotifications();
+
+    if (notification.remote) {
+      Notifications.presentLocalNotificationAsync({
+        title: 'New Notification:',
+        ios: {
+          sound: true,
+          _displayInForeground: true
+        },
+        body: notification.data.message
+      });
+    }
+  };
 
   useEffect(() => {
-    const getNotifications = async (): Promise<void> => {
-      const token = await Notifications.getExpoPushTokenAsync();
-      const res = await fetch(GET_NOTIFICATIONS_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          pushToken: token
-        })
-      });
-      const body = await res.json();
-      setNotifications(body);
-    };
+    Animated.timing(animation, {
+      toValue: 1,
+      useNativeDriver: true,
+      duration: 400
+    }).start();
 
     getNotifications();
+    setNotificationListener(Notifications.addListener(handleNotification));
   }, []);
 
   console.log(notifications);
 
   return (
-    <View style={styles.container}>
+    <Animated.View
+      style={[
+        styles.container,
+        {
+          transform: [
+            {
+              translateX: animation.interpolate({
+                inputRange: [0, 1],
+                outputRange: [600, 0]
+              })
+            }
+          ]
+        }
+      ]}
+    >
       <Text style={styles.heading}>Organisation Name</Text>
       <Text style={styles.preamble}>Last 5 notifications:</Text>
       <View style={styles.list}>
@@ -92,7 +136,7 @@ const Dashboard: React.FC<{ openModal: CallableFunction }> = ({
           )}
         />
       </View>
-    </View>
+    </Animated.View>
   );
 };
 

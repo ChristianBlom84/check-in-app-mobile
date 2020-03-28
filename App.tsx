@@ -63,7 +63,11 @@ const App: React.FC = () => {
         <Modal text={modalText} setModalOpen={setModalOpen} />
       ) : null}
       <Layout>
-        {deviceRegistered ? <Dashboard openModal={openModal} /> : <Subscribe />}
+        {deviceRegistered.registered ? (
+          <Dashboard openModal={openModal} />
+        ) : (
+          <Subscribe setDeviceRegistered={setDeviceRegistered} />
+        )}
       </Layout>
     </Fragment>
   ) : null;

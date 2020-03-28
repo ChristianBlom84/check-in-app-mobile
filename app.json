@@ -27,7 +27,7 @@
       "supportsTablet": true
     },
     "notification": {
-      "iosDisplayInForeground": true
+      "iosDisplayInForeground": false
     }
   }
 }
