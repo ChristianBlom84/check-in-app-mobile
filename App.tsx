@@ -6,6 +6,7 @@ import Subscribe from './components/pages/Subscribe';
 import Dashboard from './components/pages/Dashboard';
 import Layout from './components/layout/Layout';
 import Modal from './components/Modal';
+import { retrieveBackend } from './utils/AsyncStorageUtils';
 
 const initialRegisteredState = {
   registered: false,
@@ -34,19 +35,23 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkRegistration = async (): Promise<void> => {
-      const token = await Notifications.getExpoPushTokenAsync();
-      const res = await fetch(CHECK_REGISTRATION_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          pushToken: token
-        })
-      });
-      const body = await res.json();
-      setDeviceRegistered(body);
+      const backend = await retrieveBackend();
+
+      if (backend) {
+        const token = await Notifications.getExpoPushTokenAsync();
+        const res = await fetch(backend, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            pushToken: token
+          })
+        });
+        const body = await res.json();
+        setDeviceRegistered(body);
+      }
     };
 
     checkRegistration();

@@ -6,11 +6,14 @@ import {
   View,
   TouchableOpacity,
   InteractionManager,
-  ScrollView
+  ScrollView,
+  AsyncStorage
 } from 'react-native';
 import { validate } from 'validate.js';
 import registerForPushNotificationsAsync from '../../utils/RegisterPushNotifications';
+import { PUSH_ENDPOINT } from '../../consts/consts';
 import { formConstraints } from '../../validation/constraints';
+import { retrieveBackend, storeBackend } from '../../utils/AsyncStorageUtils';
 
 const styles = StyleSheet.create({
   container: {
@@ -111,7 +114,7 @@ const Subscribe: React.FC<{ setDeviceRegistered: CallableFunction }> = ({
   const [errors, setErrors] = useState(initialErrorState);
   const [success, setSuccess] = useState('');
 
-  const onChange = (text, fieldName): void => {
+  const onChange = (text: string, fieldName: string): void => {
     console.log(fieldName);
     if (fieldName === 'name') {
       setName(text);
@@ -138,6 +141,19 @@ const Subscribe: React.FC<{ setDeviceRegistered: CallableFunction }> = ({
     }
     if (!validationResult) {
       setErrors(initialErrorState);
+      const serverAddress = await fetch(PUSH_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          pushToken: token,
+          name,
+          email
+        })
+      });
+      const body = await res.json();
       const res = await registerForPushNotificationsAsync(name, email);
       console.log(res);
       if (res.error) {
