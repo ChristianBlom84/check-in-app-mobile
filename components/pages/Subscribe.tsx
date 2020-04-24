@@ -6,14 +6,13 @@ import {
   View,
   TouchableOpacity,
   InteractionManager,
-  ScrollView,
-  AsyncStorage
+  ScrollView
 } from 'react-native';
 import { validate } from 'validate.js';
 import registerForPushNotificationsAsync from '../../utils/RegisterPushNotifications';
 import { PUSH_ENDPOINT } from '../../consts/consts';
 import { formConstraints } from '../../validation/constraints';
-import { retrieveBackend, storeBackend } from '../../utils/AsyncStorageUtils';
+import { storeBackend } from '../../utils/AsyncStorageUtils';
 
 const styles = StyleSheet.create({
   container: {
@@ -114,6 +113,41 @@ const Subscribe: React.FC<{ setDeviceRegistered: CallableFunction }> = ({
   const [errors, setErrors] = useState(initialErrorState);
   const [success, setSuccess] = useState('');
 
+  const onCheckedIn = async (): Promise<void> => {
+    setSuccess('You are now checked in!');
+    InteractionManager.runAfterInteractions(() => {
+      setTimeout(() => {
+        setSuccess('');
+        setDeviceRegistered({ registered: true });
+      }, 3000);
+    });
+  };
+
+  const getServerAddress = async (): Promise<string> => {
+    try {
+      const res = await fetch(`${PUSH_ENDPOINT}/api/subscribers/address`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email
+        })
+      });
+      const body = await res.json();
+      const { serverAddress } = body;
+
+      return serverAddress;
+    } catch (error) {
+      console.log(error);
+      setErrors({ email: [], name: [], registration: error.message });
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => setErrors(initialErrorState), 3000);
+      });
+    }
+  };
+
   const onChange = (text: string, fieldName: string): void => {
     console.log(fieldName);
     if (fieldName === 'name') {
@@ -141,34 +175,18 @@ const Subscribe: React.FC<{ setDeviceRegistered: CallableFunction }> = ({
     }
     if (!validationResult) {
       setErrors(initialErrorState);
-      const serverAddress = await fetch(PUSH_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          pushToken: token,
-          name,
-          email
-        })
-      });
-      const body = await res.json();
-      const res = await registerForPushNotificationsAsync(name, email);
-      console.log(res);
-      if (res.error) {
+
+      try {
+        const serverAddress = await getServerAddress();
+        await storeBackend(serverAddress);
+        const res = await registerForPushNotificationsAsync(name, email);
         console.log(res);
-        setErrors({ email: [], name: [], registration: res.error });
+        onCheckedIn();
+      } catch (error) {
+        console.log(error);
+        setErrors({ email: [], name: [], registration: error.message });
         InteractionManager.runAfterInteractions(() => {
           setTimeout(() => setErrors(initialErrorState), 3000);
-        });
-      } else {
-        setSuccess('You are now checked in!');
-        InteractionManager.runAfterInteractions(() => {
-          setTimeout(() => {
-            setSuccess('');
-            setDeviceRegistered({ registered: true });
-          }, 3000);
         });
       }
     }

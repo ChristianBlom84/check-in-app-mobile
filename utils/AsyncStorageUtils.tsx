@@ -20,3 +20,13 @@ export const retrieveBackend = async (): Promise<string> => {
     console.error(error.message);
   }
 };
+
+export const retrieveAllStorageKeys = async (): Promise<string[] | object> => {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+
+    return keys;
+  } catch (error) {
+    console.error(error.message);
+  }
+};
