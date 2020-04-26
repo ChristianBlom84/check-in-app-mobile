@@ -10,7 +10,8 @@ import {
 import { Notifications } from 'expo';
 import { Notification } from 'expo/build/Notifications/Notifications.types';
 import { EventSubscription } from 'fbemitter';
-import { GET_NOTIFICATIONS_ENDPOINT } from '../../consts/consts';
+import Spinner from '../Spinner';
+import { retrieveBackend } from '../../utils/AsyncStorageUtils';
 
 const styles = StyleSheet.create({
   container: {
@@ -56,10 +57,12 @@ const Dashboard: React.FC<{ openModal: CallableFunction }> = ({
   const [notificationListener, setNotificationListener] = useState<
     EventSubscription
   >();
+  const [loadingNotifications, setLoadingNotifications] = useState(true);
 
   const getNotifications = async (): Promise<void> => {
+    const backend = await retrieveBackend();
     const token = await Notifications.getExpoPushTokenAsync();
-    const res = await fetch(GET_NOTIFICATIONS_ENDPOINT, {
+    const res = await fetch(`${backend}/api/push/all`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -71,6 +74,7 @@ const Dashboard: React.FC<{ openModal: CallableFunction }> = ({
     });
     const body = await res.json();
     setNotifications(body);
+    setLoadingNotifications(false);
   };
 
   const handleNotification = (notification: Notification): void => {
@@ -120,22 +124,30 @@ const Dashboard: React.FC<{ openModal: CallableFunction }> = ({
     >
       <Text style={styles.heading}>Organisation Name</Text>
       <Text style={styles.preamble}>Last 5 notifications:</Text>
-      <View style={styles.list}>
-        <FlatList
-          data={notifications}
-          keyExtractor={(item): string => item._id}
-          renderItem={({ item }): React.ReactElement => (
-            <TouchableOpacity onPress={(): void => openModal(item.message)}>
-              <Text style={styles.date}>
-                {new Date(item.date).toLocaleString()}
-              </Text>
-              <Text ellipsizeMode="tail" numberOfLines={1} style={styles.item}>
-                {item.message}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
+      {loadingNotifications ? (
+        <Spinner />
+      ) : (
+        <View style={styles.list}>
+          <FlatList
+            data={notifications}
+            keyExtractor={(item): string => item._id}
+            renderItem={({ item }): React.ReactElement => (
+              <TouchableOpacity onPress={(): void => openModal(item.message)}>
+                <Text style={styles.date}>
+                  {new Date(item.date).toLocaleString()}
+                </Text>
+                <Text
+                  ellipsizeMode="tail"
+                  numberOfLines={1}
+                  style={styles.item}
+                >
+                  {item.message}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      )}
     </Animated.View>
   );
 };

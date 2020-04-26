@@ -1,11 +1,15 @@
 import React, { useEffect, useState, Fragment } from 'react';
 import { Notifications } from 'expo';
 import * as Font from 'expo-font';
-import { CHECK_REGISTRATION_ENDPOINT } from './consts/consts';
 import Subscribe from './components/pages/Subscribe';
 import Dashboard from './components/pages/Dashboard';
 import Layout from './components/layout/Layout';
 import Modal from './components/Modal';
+import Spinner from './components/Spinner';
+import {
+  retrieveBackend,
+  retrieveAllStorageKeys
+} from './utils/AsyncStorageUtils';
 
 const initialRegisteredState = {
   registered: false,
@@ -18,6 +22,7 @@ const App: React.FC = () => {
     initialRegisteredState
   );
   const [fontLoaded, setFontLoaded] = useState(false);
+  const [checkingRegistration, setCheckingRegistration] = useState(true);
   const [modalText, setModalText] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -34,19 +39,25 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkRegistration = async (): Promise<void> => {
-      const token = await Notifications.getExpoPushTokenAsync();
-      const res = await fetch(CHECK_REGISTRATION_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          pushToken: token
-        })
-      });
-      const body = await res.json();
-      setDeviceRegistered(body);
+      const backend = await retrieveBackend();
+
+      if (backend) {
+        const token = await Notifications.getExpoPushTokenAsync();
+        const res = await fetch(`${backend}/api/subscribers/check-device`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            pushToken: token
+          })
+        });
+        const body = await res.json();
+        console.log(body);
+        setDeviceRegistered(body);
+      }
+      setCheckingRegistration(false);
     };
 
     checkRegistration();
@@ -63,7 +74,9 @@ const App: React.FC = () => {
         <Modal text={modalText} setModalOpen={setModalOpen} />
       ) : null}
       <Layout>
-        {deviceRegistered.registered ? (
+        {checkingRegistration ? (
+          <Spinner />
+        ) : deviceRegistered.registered ? (
           <Dashboard openModal={openModal} />
         ) : (
           <Subscribe setDeviceRegistered={setDeviceRegistered} />

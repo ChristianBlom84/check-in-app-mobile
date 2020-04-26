@@ -1,6 +1,6 @@
 import { Notifications } from 'expo';
 import * as Permissions from 'expo-permissions';
-import { PUSH_ENDPOINT } from '../consts/consts';
+import { retrieveBackend } from '../utils/AsyncStorageUtils';
 
 interface PushResponse {
   error?: string;
@@ -14,6 +14,7 @@ const registerForPushNotificationsAsync = async (
     Permissions.NOTIFICATIONS
   );
   let finalStatus = existingStatus;
+  const serverAddress = await retrieveBackend();
 
   // only ask if permissions have not already been determined, because
   // iOS won't necessarily prompt the user a second time.
@@ -34,8 +35,13 @@ const registerForPushNotificationsAsync = async (
 
   // POST the token to your backend server from where you can retrieve it to send push notifications.
   try {
-    console.log('POST-ing to ', PUSH_ENDPOINT, 'With ', email);
-    const res = await fetch(PUSH_ENDPOINT, {
+    console.log(
+      'POST-ing to ',
+      `${serverAddress}/api/subscribers/register`,
+      'With ',
+      email
+    );
+    const res = await fetch(`${serverAddress}/api/subscribers/register`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
