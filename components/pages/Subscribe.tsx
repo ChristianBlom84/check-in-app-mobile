@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 60,
     position: 'absolute',
-    bottom: 0,
+    bottom: -125,
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -149,7 +149,6 @@ const Subscribe: React.FC<{ setDeviceRegistered: CallableFunction }> = ({
   };
 
   const onChange = (text: string, fieldName: string): void => {
-    console.log(fieldName);
     if (fieldName === 'name') {
       setName(text);
     } else {
@@ -178,10 +177,20 @@ const Subscribe: React.FC<{ setDeviceRegistered: CallableFunction }> = ({
 
       try {
         const serverAddress = await getServerAddress();
-        await storeBackend(serverAddress);
-        const res = await registerForPushNotificationsAsync(name, email);
-        console.log(res);
-        onCheckedIn();
+        if (serverAddress) {
+          await storeBackend(serverAddress);
+          const res = await registerForPushNotificationsAsync(name, email);
+          onCheckedIn();
+        } else {
+          setErrors({
+            email: [],
+            name: [],
+            registration: 'There is no organization with that email domain.'
+          });
+          InteractionManager.runAfterInteractions(() => {
+            setTimeout(() => setErrors(initialErrorState), 3000);
+          });
+        }
       } catch (error) {
         console.log(error);
         setErrors({ email: [], name: [], registration: error.message });
@@ -191,6 +200,7 @@ const Subscribe: React.FC<{ setDeviceRegistered: CallableFunction }> = ({
       }
     }
   };
+
   return (
     <ScrollView>
       <View style={styles.container}>
@@ -204,17 +214,21 @@ const Subscribe: React.FC<{ setDeviceRegistered: CallableFunction }> = ({
             <Text style={styles.notificationText}>{errors.registration}</Text>
           </View>
         ) : null}
-        {errors.name.length > 0 ? (
+        {errors.name && errors.name.length > 0 ? (
           <View style={[styles.notificationView, styles.dangerView]}>
-            <Text style={styles.notificationText}>{errors.name[0]}</Text>
+            {errors.name.map(error => (
+              <Text key={error} style={styles.notificationText}>
+                {error}
+              </Text>
+            ))}
           </View>
         ) : null}
-        {errors.email.length > 0 ? (
+        {errors.email && errors.email.length > 0 ? (
           <View
             style={[
               styles.notificationView,
               styles.dangerView,
-              errors.name.length > 0 ? { bottom: 60 } : {}
+              errors.name.length > 0 ? { bottom: -65 } : {}
             ]}
           >
             {errors.email.map(error => (
